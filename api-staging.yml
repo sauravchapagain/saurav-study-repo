@@ -1,0 +1,51 @@
+version: '3.3'
+
+services:
+  django: &django
+    build:
+      context: .
+      dockerfile: ./compose/staging/django/Dockerfile
+    image: 279319081060.dkr.ecr.us-east-1.amazonaws.com/loyabuzz-staging/django:latest
+    env_file:
+      - ./.envs/.production/.django.env
+    restart: unless-stopped
+    command: /start
+    depends_on:
+      - redis
+
+  traefik:
+    build:
+      context: .
+      dockerfile: ./compose/staging/traefik/ApiDockerfile
+    image: 279319081060.dkr.ecr.us-east-1.amazonaws.com/loyabuzz-staging/traefik:latest
+    command:
+      - "--configFile=etc/traefik/api-traefik.yml"
+    depends_on:
+      - django
+    volumes:
+      - staging_traefik:/etc/traefik/acme:z
+    ports:
+      - "0.0.0.0:80:80"
+      - "0.0.0.0:443:443"
+      - "0.0.0.0:5555:5555"
+
+  redis:
+    image: 279319081060.dkr.ecr.us-east-1.amazonaws.com/loyabuzz-staging/redis:latest
+
+  celeryworker:
+    <<: *django
+    image: 279319081060.dkr.ecr.us-east-1.amazonaws.com/loyabuzz-staging/celery:latest
+    command: /start-celeryworker
+
+  celerybeat:
+    <<: *django
+    image: 279319081060.dkr.ecr.us-east-1.amazonaws.com/loyabuzz-staging/celerybeat:latest
+    command: /start-celerybeat
+
+  flower:
+    <<: *django
+    image: 279319081060.dkr.ecr.us-east-1.amazonaws.com/loyabuzz-staging/flower:latest
+    command: /start-flower
+
+volumes:
+    staging_traefik:

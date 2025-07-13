@@ -1,0 +1,51 @@
+version: '3.3'
+
+services:
+  django: &django
+    build:
+      context: .
+      dockerfile: ./compose/production/django/Dockerfile
+    image: kash4me_production_django
+    env_file:
+      - ./.envs/.production/.django.env
+    restart: unless-stopped
+    command: /start
+    depends_on:
+      - redis
+
+  traefik:
+    build:
+      context: .
+      dockerfile: ./compose/production/traefik/ApiDockerfile
+    image: traefik:v2.7
+    command:
+      - "--configFile=etc/traefik/api-traefik.yml"
+    depends_on:
+      - django
+    volumes:
+      - production_traefik:/etc/traefik/acme:z
+    ports:
+      - "0.0.0.0:80:80"
+      - "0.0.0.0:443:443"
+      - "0.0.0.0:5555:5555"
+
+  redis:
+    image: redis:5.0
+
+  celeryworker:
+    <<: *django
+    image: kash4me_production_celeryworker
+    command: /start-celeryworker
+
+  celerybeat:
+    <<: *django
+    image: kash4me_production_celerybeat
+    command: /start-celerybeat
+
+  flower:
+    <<: *django
+    image: kash4me_production_flower
+    command: /start-flower
+
+volumes:
+    production_traefik:

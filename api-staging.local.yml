@@ -1,0 +1,51 @@
+version: '3.3'
+
+services:
+  django: &django
+    build:
+      context: .
+      dockerfile: ./compose/staging/django/Dockerfile
+    image: loyabuzz_staging_django
+    env_file:
+      - ./.envs/.production/.django.env
+    restart: unless-stopped
+    command: /start
+    depends_on:
+      - redis
+
+  traefik:
+    build:
+      context: .
+      dockerfile: ./compose/staging/traefik/ApiDockerfile
+    image: traefik:v2.7
+    command:
+      - "--configFile=etc/traefik/api-traefik.yml"
+    depends_on:
+      - django
+    volumes:
+      - staging_traefik:/etc/traefik/acme:z
+    ports:
+      - "0.0.0.0:80:80"
+      - "0.0.0.0:443:443"
+      - "0.0.0.0:5555:5555"
+
+  redis:
+    image: redis:5.0
+
+  celeryworker:
+    <<: *django
+    image: loyabuzz_staging_celeryworker
+    command: /start-celeryworker
+
+  celerybeat:
+    <<: *django
+    image: loyabuzz_staging_celerybeat
+    command: /start-celerybeat
+
+  flower:
+    <<: *django
+    image: loyabuzz_staging_flower
+    command: /start-flower
+
+volumes:
+    staging_traefik:
