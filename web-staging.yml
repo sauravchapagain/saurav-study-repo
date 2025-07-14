@@ -5,7 +5,7 @@ services:
     build:
       context: .
       dockerfile: ./compose/staging/django/Dockerfile
-    image: 279319081060.dkr.ecr.us-east-1.amazonaws.com/loyabuzz-staging/django:latest
+    image: kash4me_staging_django
     env_file:
       - ./.envs/.production/.django.env
     restart: unless-stopped
@@ -17,7 +17,7 @@ services:
     build:
       context: .
       dockerfile: ./compose/staging/traefik/WebDockerfile
-    image: 279319081060.dkr.ecr.us-east-1.amazonaws.com/loyabuzz-staging/traefik:latest
+    image: traefik:v2.7
     command:
       - "--configFile=etc/traefik/web-traefik.yml"
     depends_on:
@@ -30,19 +30,21 @@ services:
       - "0.0.0.0:5555:5555"
 
   redis:
-    image: 279319081060.dkr.ecr.us-east-1.amazonaws.com/loyabuzz-staging/redis:latest
-    ports:
-      - "0.0.0.0:6379:6379"
+    image: redis:5.0
 
   celeryworker:
     <<: *django
-    image: 279319081060.dkr.ecr.us-east-1.amazonaws.com/loyabuzz-staging/celery:latest
+    image: kash4me_staging_celeryworker
     command: /start-celeryworker
 
+  # celerybeat:
+  #   <<: *django
+  #   image: kash4me_staging_celerybeat
+  #   command: /start-celerybeat
 
   flower:
     <<: *django
-    image: 279319081060.dkr.ecr.us-east-1.amazonaws.com/loyabuzz-staging/flower:latest
+    image: kash4me_staging_flower
     command: /start-flower
 
 volumes:

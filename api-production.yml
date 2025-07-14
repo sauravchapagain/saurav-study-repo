@@ -5,7 +5,7 @@ services:
     build:
       context: .
       dockerfile: ./compose/production/django/Dockerfile
-    image: kash4me_production_django
+    image: loyabuzz_production_django
     env_file:
       - ./.envs/.production/.django.env
     restart: unless-stopped
@@ -34,17 +34,17 @@ services:
 
   celeryworker:
     <<: *django
-    image: kash4me_production_celeryworker
+    image: loyabuzz_production_celeryworker
     command: /start-celeryworker
 
   celerybeat:
     <<: *django
-    image: kash4me_production_celerybeat
+    image: loyabuzz_production_celerybeat
     command: /start-celerybeat
 
   flower:
     <<: *django
-    image: kash4me_production_flower
+    image: loyabuzz_production_flower
     command: /start-flower
 
 volumes:
